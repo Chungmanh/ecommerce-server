@@ -14,13 +14,25 @@ exports.verifyToken = async (req, res, next) => {
       next();
     });
   } else {
-    return res.status(401).json("You are not authenticated");
+    return res
+      .status(401)
+      .json({ name: "Authenticated", message: "You are not authenticated" });
   }
 };
 
 exports.verifyTokenAndUserAuth = (req, res, next) => {
   this.verifyToken(req, res, () => {
     if (req.user._id == req.params.id) {
+      next();
+    } else {
+      res.status(403).json("You are not allowed");
+    }
+  });
+};
+
+exports.verifyTokenAndIsAdmin = (req, res, next) => {
+  this.verifyToken(req, res, () => {
+    if (req.user.admin) {
       next();
     } else {
       res.status(403).json("You are not allowed");

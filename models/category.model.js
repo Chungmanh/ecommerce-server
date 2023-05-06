@@ -4,6 +4,7 @@ const Schema = mongoose.Schema;
 const categorySchema = new Schema(
   {
     name: { type: String, required: true },
+    avatar: { type: String, default: "" },
     description: { type: String, default: "" },
     status: { type: Boolean, default: true },
   },

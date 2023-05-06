@@ -31,7 +31,7 @@ const generateAccessToken = (user) => {
       admin: user.admin,
     },
     "JWT_ACCESS_KEY",
-    { expiresIn: "1h" }
+    { expiresIn: "2h" }
   );
 };
 
@@ -83,7 +83,8 @@ exports.logoutUser = async (req, res) => {
 
 exports.requesRefreshToken = async (req, res) => {
   const refreshToken = req.cookies?.refreshToken;
-  console.log("req", req.cookies);
+  // console.log("req", req.cookies);
+  console.log("req", req.body);
   if (!refreshToken)
     return res
       .status(401)
@@ -110,6 +111,6 @@ exports.requesRefreshToken = async (req, res) => {
       sameSite: "strict",
     });
 
-    res.status(200).json(newAccessToken);
+    return res.status(200).json(newAccessToken);
   });
 };

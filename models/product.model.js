@@ -14,6 +14,11 @@ const productSchema = new Schema(
       // required: true,
       ref: "category",
     },
+    trademarkId: {
+      type: Schema.Types.ObjectId,
+      // required: true,
+      ref: "trademark",
+    },
     name: { type: String, required: true },
     price: { type: Number, required: true },
     description: { type: String, default: "" },

@@ -137,7 +137,7 @@ exports.result = (data, customerId, k = 2) => {
         if (userSimilarity.length < k) {
           continue;
         }
-        console.log("userSimilarity after: ", userSimilarity);
+        // console.log("userSimilarity after: ", userSimilarity);
 
         //sap xep giam dan
         userSimilarity.sort((a, b) => {
@@ -147,11 +147,11 @@ exports.result = (data, customerId, k = 2) => {
             ? -1
             : 1;
         });
-        console.log("userSimilarity before: ", userSimilarity);
+        // console.log("userSimilarity before: ", userSimilarity);
         //lay k gia tri similarity lon nhat
         const indexToCalculator = userSimilarity.splice(k).map((x) => x.index);
         // console.log("indexToCalculator: ", indexToCalculator);
-        console.log("userSimilarity: ", userSimilarity);
+        // console.log("userSimilarity: ", userSimilarity);
 
         // Tinh toan
         let tu = 0;
@@ -163,7 +163,7 @@ exports.result = (data, customerId, k = 2) => {
         }
 
         if (tu / mau > 0) {
-          console.log(tu / mau);
+          // console.log(tu / mau);
           result.push(list_productId[productIndex]);
         }
       }
@@ -178,7 +178,7 @@ exports.result = (data, customerId, k = 2) => {
   );
 
   const matrix = Normalized_Utility_Matrix(utilityMatrix);
-  console.log("utilityMatrix: ", utilityMatrix);
+  // console.log("utilityMatrix: ", utilityMatrix);
 
   // console.log("matrix: ", matrix);
   const similarity = Similarity_Matrix(matrix);

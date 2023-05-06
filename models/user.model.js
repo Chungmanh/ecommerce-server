@@ -7,10 +7,11 @@ const userSchema = new Schema(
     username: { type: String, required: true },
     email: { type: String },
     address: { type: String, required: true },
-    telephone: { type: String, required: true, uinque: true },
+    telephone: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     avatar: { type: String },
     admin: { type: Boolean, default: false },
+    status: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
@@ -28,10 +29,13 @@ const userSchema = new Schema(
 // );
 
 userSchema.method("getShopIdFromUser", async function getShopIdFromUser() {
-  const { _id } = await shopModel
-    .findOne({ userId: this._id }, { _id: 1 })
-    .lean();
-  return _id;
+  const shop = await shopModel.findOne({ userId: this._id }, { _id: 1 }).lean();
+
+  if (shop) {
+    const { _id } = shop;
+    return _id;
+  }
+  return null;
 });
 
 module.exports = mongoose.model("user", userSchema);

@@ -25,6 +25,7 @@ router.post(
   upload.single("avatar"),
   productController.addProduct
 );
+
 router.delete(
   "/delete/:id",
   middlewareController.verifyToken,
@@ -63,6 +64,22 @@ router.get("/get-all-product", async (req, res) => {
   const products = await productController.getAllProduct();
   res.json(products);
 });
+
+router.post("/get-products-query", async (req, res) => {
+  const { query } = req.body;
+  const products = await productController.getProductsByQuery(query);
+  res.json(products);
+});
+
+// router.get(
+//   "/get-all-product",
+//   middlewareController.verifyToken,
+//   async (req, res) => {
+//     const user = req.user;
+//     const products = await productController.getProductsInHome(user._id);
+//     res.json(products);
+//   }
+// );
 
 router.post(
   "/get-product-ids",

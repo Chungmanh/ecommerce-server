@@ -6,6 +6,9 @@ const middlewareController = require("../middleware/auth.middleware");
 router.post("/register", authController.registerUser);
 router.post("/login", authController.loginUser);
 router.get("/refreshToken", authController.requesRefreshToken);
+// router.get("/refreshToken", () => {
+//   console.log("popopo");
+// });
 router.post(
   "/logout",
   middlewareController.verifyToken,
