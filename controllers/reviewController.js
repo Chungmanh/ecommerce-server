@@ -1,15 +1,21 @@
 const reviewModel = require("../models/review.model");
+const productModel = require("../models/product.model");
 
 exports.addReview = async (review, userId) => {
   try {
-    console.log("review: ", review);
+    // console.log("review: ", review);
+    const { productId, vote, comment } = review;
     const obj = {
       userId: userId,
-      productId: review.productId,
-      vote: review.vote,
-      comment: review.comment,
+      productId: productId,
+      vote: vote,
+      comment: comment,
     };
     const created = await reviewModel.create(obj);
+    if (productId) {
+      const votes = await productModel.updateStarByProductId(productId);
+      // console.log("votes: ", votes);
+    }
     return created;
   } catch (error) {
     console.log(error);

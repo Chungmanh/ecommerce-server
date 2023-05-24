@@ -10,6 +10,7 @@ const reviewRouter = require("./routes/review.route");
 const shopRouter = require("./routes/shop.route");
 const userRouter = require("./routes/user.route");
 const trademarkRouter = require("./routes/trademark.route");
+const revenueRouter = require("./routes/revenue.route");
 const actionRouter = require("./routes/actions.route");
 
 const cors = require("cors");
@@ -39,6 +40,7 @@ app.use("/review", reviewRouter);
 app.use("/shop", shopRouter);
 app.use("/user", userRouter);
 app.use("/trademark", trademarkRouter);
+app.use("/revenue", revenueRouter);
 app.use("/action", actionRouter);
 app.use("/auth", authRouter);
 // app.use("/backend/images", express.static("backend/images"));

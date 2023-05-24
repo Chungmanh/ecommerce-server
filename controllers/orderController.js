@@ -3,14 +3,18 @@ const cartModel = require("../models/cart.model");
 const userModel = require("../models/user.model");
 const productModel = require("../models/product.model");
 
-exports.createOrder = async (userId, order) => {
+exports.createOrder = async (userId, order, info) => {
   try {
+    console.log("info: ", info);
+
     const cart = await cartModel.findOne({ userId }, {}, { lean: true });
-    const user = await userModel.findById(userId, {}, { lean: true });
+    // const user = await userModel.findById(userId, {}, { lean: true });
 
     for (let i = 0; i < order.length; i++) {
       const { items } = order[i];
-      const shop = await productModel.getShopFromProductId(items[0]);
+      console.log("items: ", items);
+      const product = await productModel.findById(items[0]);
+      // const shop = await productModel.getShopFromProductId(items[0]);
 
       const orderItems = [];
       let total = 0;
@@ -26,10 +30,10 @@ exports.createOrder = async (userId, order) => {
       }
       const newOrder = new orderModel({
         userId: userId,
-        shopId: shop._id,
+        shopId: product.shopId,
         items: orderItems,
-        address: user.address,
-        telephone: user.telephone,
+        address: info.address,
+        telephone: info.telephone,
         total: total,
       });
       newOrder.save();

@@ -7,6 +7,7 @@ exports.verifyToken = async (req, res, next) => {
     const accessToken = token.split(" ")[1];
     jwt.verify(accessToken, "JWT_ACCESS_KEY", (err, user) => {
       if (err) {
+        console.log("err: ", err);
         return res.status(403).json(err);
         // return res.status(403).json("token is not valid");
       }

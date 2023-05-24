@@ -36,10 +36,11 @@ router.delete(
   }
 );
 
-router.get(
+router.post(
   "/get-product-by-shop",
   middlewareController.verifyToken,
   async (req, res) => {
+    const { keyword } = req.body;
     const user = req.user;
     const user_info = await userModel.findById(user._id);
     const shopId = await shopModel.findOne({ userId: user._id });
@@ -52,10 +53,13 @@ router.get(
         telephone: user_info.telephone,
       });
       await shop.save();
-      res.status(200).json([]);
+      return res.status(200).json([]);
     } else {
-      const products = await productController.getAllProductByShop(shopId);
-      res.json(products);
+      const products = await productController.getAllProductByShop(
+        shopId,
+        keyword
+      );
+      return res.json(products);
     }
   }
 );
@@ -68,8 +72,18 @@ router.get("/get-all-product", async (req, res) => {
 router.post("/get-products-query", async (req, res) => {
   const { query } = req.body;
   const products = await productController.getProductsByQuery(query);
-  res.json(products);
+  return res.json(products);
 });
+
+router.post(
+  "/get-products-query-v2",
+  middlewareController.verifyTokenAndIsAdmin,
+  async (req, res) => {
+    const { query } = req.body;
+    const products = await productController.getProductsByQueryV2(query);
+    return res.json(products);
+  }
+);
 
 // router.get(
 //   "/get-all-product",
@@ -122,6 +136,31 @@ router.get("/:id", async (req, res) => {
   const { id } = req.params;
   const product = await productController.getProductById(id);
   res.json(product);
+});
+
+router.put(
+  "/change-status",
+  middlewareController.verifyTokenAndIsAdmin,
+  async (req, res) => {
+    const { productId, status } = req.body;
+    if (productId && status) {
+      const updated = await productController.changeStatus(productId, status);
+      return res.status(200).json(updated);
+    }
+    return res.status(403).json(false);
+  }
+);
+
+router.get("/get-products-shop/:id", async (req, res) => {
+  const { id } = req.params;
+  const products = await productController.getAllProductByShop(id);
+  return res.json(products);
+});
+
+router.post("/get-products-keyword", async (req, res) => {
+  const { keyword } = req.body;
+  const products = await productController.getProductsByTextSearch(keyword);
+  return res.json(products);
 });
 
 module.exports = router;

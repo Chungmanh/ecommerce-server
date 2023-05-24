@@ -28,11 +28,15 @@ router.get(
   categoryController.getAllCategory
 );
 
-router.get("/:id", async (req, res) => {
-  const { id } = req.params;
-  const category = await categoryController.getCategoryById(id);
-  res.json(category);
-});
+router.get(
+  "/:id",
+  middlewareController.verifyTokenAndIsAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const category = await categoryController.getCategoryById(id);
+    res.json(category);
+  }
+);
 
 router.delete(
   "/delete/:id",

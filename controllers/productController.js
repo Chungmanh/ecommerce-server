@@ -17,7 +17,7 @@ exports.addProduct = async (req, res) => {
     //Create new product
     const product = req.body;
     const file = req.file;
-
+    console.log("product: ", product);
     const { _id, ...other } = product;
 
     const obj = {
@@ -27,6 +27,10 @@ exports.addProduct = async (req, res) => {
     if (file) {
       const url_file = await uploadFile(file, "product");
       obj.avatar = url_file;
+    }
+
+    if (!obj.trademarkId) {
+      delete obj.trademarkId;
     }
 
     if (_id) {
@@ -51,7 +55,8 @@ exports.addProduct = async (req, res) => {
 
 exports.deleteProduct = async (id) => {
   try {
-    const deleted = await productModel.findByIdAndDelete(id);
+    // const deleted = await productModel.findByIdAndDelete(id);
+    const deleted = await productModel.findByIdAndUpdate(id, { deleted: true });
     return deleted;
   } catch (error) {
     console.log(error);
@@ -59,9 +64,19 @@ exports.deleteProduct = async (id) => {
   }
 };
 
-exports.getAllProductByShop = async (shopId) => {
+exports.getAllProductByShop = async (shopId, keyword = "") => {
   try {
-    const products = await productModel.find({ shopId: shopId });
+    const query = [{ shopId: shopId }, { deleted: false }];
+    if (keyword) {
+      query.push({ $text: { $search: keyword } });
+    }
+    const products = await productModel.find({
+      $and: query,
+    });
+    // const products = await productModel.find({
+    //   shopId: shopId,
+    //   deleted: false,
+    // });
     return products;
   } catch (error) {
     console.log(error);
@@ -81,24 +96,68 @@ exports.getAllProduct = async () => {
 
 exports.getProductsByQuery = async (query) => {
   try {
-    const { sort, categoryId, name, skip, limit, ...other } = query;
+    const {
+      sort,
+      categoryId,
+      name,
+      skip,
+      limit,
+      price,
+      star,
+      shopId,
+      trademarkId,
+      ...other
+    } = query;
+    console.log("query: ", query);
     // const page = skip ? limit / skip : 0;
     const page = skip / limit;
-    const agg = [
-      {
-        $match: {
-          // categoryId: new mongoose.Types.ObjectId("641fc902af94c0e0751cd048"),
-        },
+    const agg = [];
+
+    if (name) {
+      agg.push({
+        // $match: { name: { $regex: name, $options: "gi" } },
+        $match: { $text: { $search: name } },
+      });
+    }
+
+    agg.push({
+      $match: {
+        deleted: false,
+        status: 2,
       },
-    ];
+    });
+
+    if (shopId) {
+      agg.push({
+        $match: { shopId: new mongoose.Types.ObjectId(shopId) },
+      });
+    }
+
     if (categoryId) {
       agg.push({
         $match: { categoryId: new mongoose.Types.ObjectId(categoryId) },
       });
     }
-    if (name) {
+    if (trademarkId) {
       agg.push({
-        $match: { name: { $regex: name, $options: "gi" } },
+        $match: { trademarkId: new mongoose.Types.ObjectId(trademarkId) },
+      });
+    }
+
+    const objPrice = {
+      $gte: price?.from || 0,
+      $lte: price.to,
+    };
+    if (!objPrice.$lte) {
+      delete objPrice.$lte;
+    }
+    agg.push({
+      $match: { price: objPrice },
+    });
+
+    if (star) {
+      agg.push({
+        $match: { star: { $gte: star } },
       });
     }
 
@@ -135,7 +194,7 @@ exports.getProductsByQuery = async (query) => {
         products: [{ $skip: skip }, { $limit: limit }],
       },
     });
-    // console.log("agg: ", agg);
+    // console.log("agg: ", JSON.stringify(agg));
     const products = await productModel.aggregate(agg);
     // const products = await productModel.find(other, {}, { sort, lean: true });
     // console.log("products: ", products);
@@ -200,6 +259,9 @@ exports.getProductByIdsV2 = async (ids) => {
 exports.getProductById = async (id) => {
   try {
     const product = await productModel.findById(id, {}, { lean: true });
+    const shop = await shopModel.findById(product.shopId);
+    const totalProduct = await shop.getTotalProductOfShop();
+
     const reviews = await reviewModel.find(
       { productId: id },
       {},
@@ -210,7 +272,14 @@ exports.getProductById = async (id) => {
       { name: 1 },
       { lean: true }
     );
-    return { ...product, reviews, trademarkName };
+    return {
+      ...product,
+      reviews,
+      trademarkName,
+      shopName: shop.name,
+      shopAvatar: shop?.avatar,
+      totalProduct,
+    };
   } catch (error) {
     console.log(error);
     return {};
@@ -303,5 +372,115 @@ exports.getAllProductsOrderOfUser = async (userId) => {
   } catch (error) {
     console.log(error);
     return {};
+  }
+};
+
+// exports.getAllProductsByStatus = async (status) => {
+//   try {
+//     const products = await productModel.find({});
+//     return products;
+//   } catch (error) {
+//     console.log(error);
+//     return [];
+//   }
+// };
+
+exports.getProductsByQueryV2 = async (query) => {
+  try {
+    const { sort, categoryId, name, skip, limit, status, ...other } = query;
+    // console.log("query: ", query);
+    let page = 0;
+    if (skip && limit) {
+      page = skip / limit;
+    }
+
+    const agg = [
+      {
+        $match: {
+          // categoryId: new mongoose.Types.ObjectId("641fc902af94c0e0751cd048"),
+        },
+      },
+    ];
+    if (categoryId) {
+      agg.push({
+        $match: { categoryId: new mongoose.Types.ObjectId(categoryId) },
+      });
+    }
+    if (status) {
+      agg.push({
+        $match: { status },
+      });
+    }
+    if (name) {
+      agg.push({
+        $match: { name: { $regex: name, $options: "gi" } },
+      });
+    }
+
+    agg.push({
+      $lookup: {
+        from: "orders",
+        localField: "_id",
+        foreignField: "items.productId",
+        as: "orders",
+      },
+    });
+
+    agg.push({
+      $addFields: {
+        numberOfOrders: {
+          $cond: {
+            if: { $isArray: "$orders" },
+            then: { $size: "$orders" },
+            else: 0,
+          },
+        },
+      },
+    });
+    if (
+      sort &&
+      Object.keys(sort).length !== 0 &&
+      Object.getPrototypeOf(sort) === Object.prototype
+    ) {
+      agg.push({ $sort: sort });
+    }
+    // agg.push({
+    //   $facet: {
+    //     metadata: [{ $count: "total" }, { $addFields: { page: page } }],
+    //     products: [{ $skip: skip }, { $limit: limit }],
+    //   },
+    // });
+    // console.log("agg: ", agg);
+    const products = await productModel.aggregate(agg);
+    // const products = await productModel.find(other, {}, { sort, lean: true });
+    // console.log("products: ", products);
+    return products;
+  } catch (error) {
+    console.log(error);
+    return [];
+  }
+};
+
+exports.changeStatus = async (productId, status) => {
+  try {
+    const updated = await productModel.findByIdAndUpdate(productId, { status });
+    return updated;
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
+};
+
+exports.getProductsByTextSearch = async (keyword = "") => {
+  try {
+    const products = await productModel.find(
+      { $text: { $search: keyword } },
+      {},
+      { limit: 7 }
+    );
+    return products;
+  } catch (error) {
+    console.log(error);
+    return [];
   }
 };

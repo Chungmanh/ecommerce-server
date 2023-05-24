@@ -115,6 +115,7 @@ exports.getCart = async (userId) => {
         populate: {
           path: "productId",
           populate: { path: "shopId", options: { lean: true } },
+          // match: { deleted: false },
           options: {
             lean: true,
           },

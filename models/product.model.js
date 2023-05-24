@@ -1,4 +1,5 @@
 const shopModel = require("./shop.model");
+const reviewModel = require("./review.model");
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
@@ -11,7 +12,7 @@ const productSchema = new Schema(
     },
     categoryId: {
       type: Schema.Types.ObjectId,
-      // required: true,
+      required: true,
       ref: "category",
     },
     trademarkId: {
@@ -25,11 +26,19 @@ const productSchema = new Schema(
     quantity: { type: Number, default: 0 },
     star: { type: Number, default: 0 },
     avatar: { type: String, default: "" },
+    note: { type: String, default: "" },
     type: { type: String, default: "Khác" },
-    status: { type: Boolean, default: true },
+    // status: { type: Boolean, default: true },
+    status: { type: Number, default: 1 }, // 1. Chưa duyệt, 2. Đã duyệt, 3. Đã loại
+    deleted: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
+
+productSchema.index({
+  name: "text",
+  description: "text",
+});
 
 // productSchema.method('get', function fullName(): string {
 //   return this.firstName + ' ' + this.lastName;
@@ -38,17 +47,15 @@ const productSchema = new Schema(
 productSchema.static(
   "getShopFromProductId",
   async function getShopFromProductId(productId) {
-    console.log("productId: ", productId);
-    const test = await this.findById(productId, { shopId: 1 }, { lean: true });
-    console.log("test: ", test);
     const { shopId } = await this.findById(
       productId,
       { shopId: 1 },
       { lean: true }
     );
-    const shop = await shopModel.findById(shopId).lean();
+    console.log("shopId: ", shopId);
+    const shop = await shopModel.findById(shopId);
 
-    // console.log("shop: ", shop);
+    console.log("shop: ", shop);
     return shop;
   }
 );
@@ -62,6 +69,21 @@ productSchema.static(
       { lean: true }
     );
     return price;
+  }
+);
+
+productSchema.static(
+  "updateStarByProductId",
+  async function updateStarByProductId(productId) {
+    const list_vote = (
+      await reviewModel.find(
+        { productId: productId },
+        { vote: 1, _id: 0 },
+        { lean: true }
+      )
+    ).map((vote) => vote.vote);
+    const avg_vote = list_vote.reduce((a, b) => a + b, 0) / list_vote.length;
+    return this.findByIdAndUpdate(productId, { star: avg_vote }, { new: true });
   }
 );
 

@@ -11,7 +11,7 @@ const cartItemSchema = mongoose.Schema(
     },
     quantity: {
       type: Number,
-      min: 0,
+      min: 1,
     },
   },
   { _id: false }

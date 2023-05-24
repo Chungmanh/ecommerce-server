@@ -82,35 +82,40 @@ exports.logoutUser = async (req, res) => {
 };
 
 exports.requesRefreshToken = async (req, res) => {
-  const refreshToken = req.cookies?.refreshToken;
-  // console.log("req", req.cookies);
-  console.log("req", req.body);
-  if (!refreshToken)
-    return res
-      .status(401)
-      .json({ name: "Authenticated", message: "You are not authenticated" });
+  try {
+    // const refreshToken = req.cookies?.refreshToken;
+    // console.log("req", req.cookies);
+    // console.log("req", req.body);
+    const { refreshToken } = req.body;
+    if (!refreshToken)
+      return res
+        .status(401)
+        .json({ name: "Authenticated", message: "You are not authenticated" });
 
-  jwt.verify(refreshToken, "JWT_REFRESH_KEY", async (err, user) => {
-    if (err) {
-      console.log(err);
-    } else {
-      console.log("user: ", user);
-    }
+    jwt.verify(refreshToken, "JWT_REFRESH_KEY", async (err, user) => {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log("user: ", user);
+      }
 
-    const isExists = await userModel.findById(user._id);
-    console.log("isExists: ", isExists);
-    if (!isExists) return res.status(401).json("You are not authenticated 2");
+      const isExists = await userModel.findById(user._id);
+      // console.log("isExists: ", isExists);
+      if (!isExists) return res.status(401).json("You are not authenticated 2");
 
-    const newAccessToken = generateAccessToken(user);
-    const newRefreshToken = generateRefreshToken(user);
+      const newAccessToken = generateAccessToken(user);
+      const newRefreshToken = generateRefreshToken(user);
 
-    res.cookie("refreshToken", newRefreshToken, {
-      httpOnly: true,
-      // secure: false,
-      // path: "/",
-      sameSite: "strict",
+      res.cookie("refreshToken", newRefreshToken, {
+        httpOnly: true,
+        // secure: false,
+        // path: "/",
+        sameSite: "strict",
+      });
+
+      return res.status(200).json(newAccessToken);
     });
-
-    return res.status(200).json(newAccessToken);
-  });
+  } catch (error) {
+    return res.status(403).json(error);
+  }
 };

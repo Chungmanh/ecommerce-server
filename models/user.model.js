@@ -9,7 +9,7 @@ const userSchema = new Schema(
     address: { type: String, required: true },
     telephone: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    avatar: { type: String },
+    avatar: { type: String, default: "" },
     admin: { type: Boolean, default: false },
     status: { type: Boolean, default: true },
   },

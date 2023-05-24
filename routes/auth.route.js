@@ -5,7 +5,10 @@ const middlewareController = require("../middleware/auth.middleware");
 
 router.post("/register", authController.registerUser);
 router.post("/login", authController.loginUser);
-router.get("/refreshToken", authController.requesRefreshToken);
+router.post("/refreshToken", authController.requesRefreshToken);
+// router.get("/refreshToken", (req, res) => {
+//   res.status(200).json("hello");
+// });
 // router.get("/refreshToken", () => {
 //   console.log("popopo");
 // });
